@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  BUYER
+  VENDOR
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  MOMO
+  CASH_ON_DELIVERY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum Category {
+  PRODUCE
+  FASHION
+  BEAUTY
+  ELECTRONICS
+  FOOD_DRINKS
+  OTHER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String?  @unique
+  name      String
+  role      Role     @default(BUYER)
+  shop      Shop?
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Neighborhood {
+  id    String @id @default(cuid())
+  name  String @unique
+  city  String @default("Kigali")
+  shops Shop[]
+}
+
+model Shop {
+  id             String       @id @default(cuid())
+  slug           String       @unique
+  name           String
+  description    String?
+  whatsappNumber String
+  logoUrl        String?
+  coverUrl       String?
+  isApproved     Boolean      @default(false)
+  isActive       Boolean      @default(true)
+  owner          User         @relation(fields: [ownerId], references: [id])
+  ownerId        String       @unique
+  neighborhood   Neighborhood @relation(fields: [neighborhoodId], references: [id])
+  neighborhoodId String
+  products       Product[]
+  orders         Order[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  price       Int?
+  images      String[]
+  category    Category    @default(OTHER)
+  stock       Int         @default(0)
+  isAvailable Boolean     @default(true)
+  shop        Shop        @relation(fields: [shopId], references: [id])
+  shopId      String
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Order {
+  id            String        @id @default(cuid())
+  buyer         User          @relation(fields: [buyerId], references: [id])
+  buyerId       String
+  shop          Shop          @relation(fields: [shopId], references: [id])
+  shopId        String
+  items         OrderItem[]
+  status        OrderStatus   @default(PENDING)
+  totalRwf      Int
+  paymentMethod PaymentMethod @default(MOMO)
+  paymentStatus PaymentStatus @default(PENDING)
+  phone         String
+  address       String
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  order       Order   @relation(fields: [orderId], references: [id])
+  orderId     String
+  product     Product @relation(fields: [productId], references: [id])
+  productId   String
+  quantity    Int
+  priceAtTime Int
+}
